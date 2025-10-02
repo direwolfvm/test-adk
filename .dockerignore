@@ -8,3 +8,6 @@ README_NOTES.md
 .github
 npm-debug.log
 Dockerfile
+
+# Ignore server node_modules if present
+server/node_modules

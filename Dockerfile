@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
@@ -7,24 +7,24 @@ WORKDIR /app
 ARG VITE_AGENT_URL
 ENV VITE_AGENT_URL=${VITE_AGENT_URL}
 
-# Install deps and build
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --silent
 
+# Copy source and build
 COPY . .
 RUN npm run build
 
-# Production image
-FROM nginx:stable-alpine
+# Runtime image
+FROM node:20-alpine
+WORKDIR /app
 
-# Copy built files
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copy built static assets and server files
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/server ./server
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/node_modules ./node_modules
 
-# Copy custom nginx conf (optional proxy for /agent)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Cloud Run expects the server to listen on $PORT (default 8080)
-ENV PORT 8080
+ENV PORT=8080
 EXPOSE 8080
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server/server.js"]
