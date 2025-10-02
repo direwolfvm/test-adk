@@ -19,9 +19,11 @@ export default function App() {
     setResponse(null)
     setAssistantText('')
     try {
-      // Prefer the proxied relative path in dev so Vite server proxy handles CORS.
-      const devProxy = '/agent'
-      const url = (import.meta.env.DEV ? devProxy : import.meta.env.VITE_AGENT_URL) || 'https://permitting-adk-650621702399.us-east4.run.app/agent'
+  // Use the local proxy in both dev and production so the browser calls our server
+  // which then forwards requests to the ADK agent. If you need to force a direct
+  // remote call, set VITE_AGENT_URL_FORCE at build time.
+  const defaultProxy = '/agent'
+  const url = import.meta.env.VITE_AGENT_URL_FORCE || defaultProxy
       // The ADK agent expects a specific JSON body. The 422 response indicates
       // our previous body (just { prompt }) had extra/incorrect fields.
       // Construct a minimal valid payload that includes the required fields.
@@ -141,10 +143,12 @@ export default function App() {
     }
   }
 
+  const PROXY_PATH = '/agent'
+
   return (
     <div className="container">
       <h1>CopilotKit ADK Agent Demo</h1>
-      <p>Agent URL: <code>{import.meta.env.VITE_AGENT_URL || 'https://permitting-adk-650621702399.us-east4.run.app/agent'}</code></p>
+      <p>Agent endpoint: <code>{PROXY_PATH} (proxied)</code></p>
 
       <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={4} />
       <div className="actions">
